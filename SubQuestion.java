@@ -3,6 +3,7 @@ public class SubQuestion extends Question {
 		super(p_left, p_right, p_left - p_right);
 	}
 
+	@Override
 	public String toString() {
 		return "" + getLeft() + " - " + getRight();
 	}

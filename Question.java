@@ -2,7 +2,7 @@ public abstract class Question {
 	private int mLeft;
 	private int mRight;
 	private static int mResult;
-	private final static int RANGE = 50;
+	private final static int RANGE = 1;
 	
 	public Question(int pLeft, int pRight, int pResult) {
 		setLeft(pLeft);
@@ -47,7 +47,7 @@ public abstract class Question {
 	}
 	
 	protected static int getResult() {
-		return mResult;
+	 return mResult;
 	}
 	
 	public static boolean checkAnswer(int pInt) {

@@ -29,17 +29,17 @@ public class View extends JFrame implements ActionListener {
 	@SuppressWarnings("unused")
 	private MainTest mMain;
 	private JTextField mAnswerText, mQuestionText, mNumQText, mIncorrectText, mCorrectText;
-	Stack<Question> unansweredQ = new Stack<>();
-	Stack<Question> answeredQ = new Stack<>();
+	private Stack<Question> unansweredQ = new Stack<>();
+	private Stack<Question> answeredQ = new Stack<>();
 	public static Stack<Question> reportStack = new Stack<Question>();
 	static int questionCounter;
-
+	static int indexer;
 	static JFrame frame = new JFrame();
 	public static String q = (String) JOptionPane.showInputDialog(frame,
 			"How many questions would you like to answer?");
 
 	static int totalQ = tryParse(q);
-
+	
 	public static Integer tryParse(String q) {
 
 		try {
@@ -47,7 +47,7 @@ public class View extends JFrame implements ActionListener {
 				JOptionPane.showMessageDialog(frame, "Input must be positive. Exiting.", "Warning!",
 						JOptionPane.WARNING_MESSAGE);
 				System.exit(DISPOSE_ON_CLOSE);
-
+				
 			}
 
 			return Integer.parseInt(q);
@@ -63,8 +63,15 @@ public class View extends JFrame implements ActionListener {
 	public View(MainTest pMain) {
 		setMain(pMain);
 		setQuestion(totalQ);
-		questionCounter = totalQ - (totalQ - 1);
-
+		
+		/**
+		 * Question counter to count 1 thru totalQ. 
+		 * Indexer to start at end of end of stack due to LIFO
+		 */
+		
+		questionCounter = 1;
+		indexer = (totalQ - 1);
+		
 		JPanel panelNumberOfQuestions = new JPanel(new FlowLayout());
 		mNumQText = new JTextField();
 		mNumQText.setColumns(10);
@@ -75,7 +82,8 @@ public class View extends JFrame implements ActionListener {
 		JFrame mainConsole = new JFrame();
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		mainConsole.setLayout(new FlowLayout());
-
+		
+		//Text Fields
 		JPanel panelQuestion = new JPanel(new FlowLayout());
 		mQuestionText = new JTextField();
 		mQuestionText.setColumns(10);
@@ -106,7 +114,8 @@ public class View extends JFrame implements ActionListener {
 
 		JPanel panelButtons = new JPanel(new FlowLayout());
 		JPanel panelButtons2 = new JPanel(new FlowLayout());
-
+		
+		//Buttons disable next/previous until 1st question is answered correct. 
 		mCheckButton = new JButton();
 		mCheckButton.setText("Check Answer");
 		mCheckButton.addActionListener(this);
@@ -127,7 +136,8 @@ public class View extends JFrame implements ActionListener {
 		mReportButton = new JButton();
 		mReportButton.setText("Generate Report");
 		mReportButton.addActionListener(this);
-
+		
+		//Panels
 		panelButtons.add(mCheckButton);
 		panelButtons.add(mPreviousButton);
 		panelButtons.add(mNextButton);
@@ -168,14 +178,15 @@ public class View extends JFrame implements ActionListener {
 		// Center the program on screen
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 2 - this.getSize().height / 2);
-
-		reportStack.addAll(unansweredQ); // clones stack for report generation
+		// clones stack for report generation
+		reportStack.addAll(unansweredQ); 
 
 	}
 
 	// Recursive add questions to unanswered Stack
 	private void setQuestion(int pIn) {
 		if (pIn == 1) {
+			
 			unansweredQ.push(Question.newQuestion());
 		} else {
 			unansweredQ.push(Question.newQuestion());
@@ -194,21 +205,26 @@ public class View extends JFrame implements ActionListener {
 		}
 
 		else if (actionCommand.equals("Check Answer")) {
-
+		
 			boolean answerClose = false;
 			String checker = mAnswerText.getText().trim();
-
+			
 			try {
-
+				
 				int newInt = Integer.parseInt(checker);
-				if (Question.checkAnswer(newInt) == true) {
+				
+				if (Question.getResult() == newInt) {
+					
 					mCorrectText.setBackground(Color.GREEN);
 					mNextButton.setEnabled(true);
 
+					
 					if (getIncorrectStatus() == true) {
 						mIncorrectText.setBackground(null);
 					}
 					if (questionCounter == totalQ) {
+						//If on last question, or answering only 1 question 
+						//call generate report on correct answer
 						try {
 							generateReport(reportStack);
 						} catch (IOException e1) {
@@ -221,6 +237,7 @@ public class View extends JFrame implements ActionListener {
 					mIncorrectText.setBackground(Color.red);
 
 				} else {
+					mCorrectText.setBackground(null); 
 					mIncorrectText.setBackground(Color.red);
 				}
 				if (answerClose == true) {
@@ -237,31 +254,24 @@ public class View extends JFrame implements ActionListener {
 			lockButtonsOnNext();
 			resetTextColor();
 			mNumQText.setText("Question : " + questionCounter + "/" + totalQ);
-			mQuestionText.setText(unansweredQ.peek().toString());
+			mQuestionText.setText(unansweredQ.get(indexer).toString());
 			answeredQ.push(unansweredQ.pop());
 
 		} else if (actionCommand.equals("Previous Question")) {
-
+			mNextButton.setEnabled(true);
 			decrementCounter();
 			lockButtonsOnPrevious();
 			resetTextColor();
 			mNumQText.setText("Question : " + questionCounter + "/" + totalQ);
-			mQuestionText.setText(answeredQ.peek().toString());
+			mQuestionText.setText(answeredQ.get(questionCounter-1).toString());
 			unansweredQ.push(answeredQ.pop());
 
 		} else if (actionCommand.equals("Show Solution")) {
-			Question currentQuestion = getCurrentQuestion();
-
-			System.out.println("Current Question " + currentQuestion);
-			System.out.println();
-			System.out.println("Question Counter " + questionCounter);
-			System.out.println();
-			System.out.println("Report Stack " + reportStack);
-			System.out.println();
-			System.out.println("Unanswered Stack" + unansweredQ);
-			System.out.println();
+			Question solution = unansweredQ.elementAt(indexer);
+			
+			
 			System.out.println("Solution " + solution);
-			JOptionPane.showMessageDialog(null, solution, "Solution for: ", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(null, unansweredQ.get(indexer) + " = " + Question.getResult(), "Solution Set", JOptionPane.INFORMATION_MESSAGE);
 
 		} else if (actionCommand.equals("Generate Report")) {
 			try {
@@ -271,40 +281,55 @@ public class View extends JFrame implements ActionListener {
 			}
 		}
 	}
+			
 
-	public static Question getCurrentQuestion() {
-		int indexer = View.questionCounter - 1;
-		System.out.println("Indexer " + indexer);
-		return View.reportStack.get((View.totalQ - 1) - indexer);
-
-	}
-
+	/**
+	 * Checks status of incorrect to reset if incorrect answer was input before a correct answer.
+	 * Prevents both boxes being colored at same time after correct answer input. 
+	 *
+	 * @return
+	 */
 	private boolean getIncorrectStatus() {
 		if (mIncorrectText.getBackground() == Color.red) {
 			return true;
 		}
 		return false;
 	}
-
+	/**
+	 * Disables next button if at last question. 
+	 * Prevents out of bounds exceptions.
+	 *
+	 */
 	private void lockButtonsOnNext() {
-		if (questionCounter == totalQ) {
+		if (((totalQ - unansweredQ.size() == answeredQ.size()) && questionCounter == answeredQ.size()) || totalQ == questionCounter) {
 			mNextButton.setEnabled(false);
 		}
+		
+		
 	}
-
+	/**
+	 * Disables previous button if at question 1 (index 0) to prevent out of bounds exceptions
+	 *
+	 */
 	private void lockButtonsOnPrevious() {
 		if (questionCounter == 1) {
 			mPreviousButton.setEnabled(false);
-		}
-
+		} 
 	}
-
+	/**
+	 * Resets color of incorrect and correct text fields to default
+	 */
 	private void resetTextColor() {
 		mIncorrectText.setBackground(null);
 		mCorrectText.setBackground(null);
 
 	}
-
+	/**
+	 *  
+	 * @Writer creates .txt report from stack input
+	 * @param pStack
+	 * @throws IOException
+	 */
 	private void generateReport(Stack<Question> pStack) throws IOException {
 		pStack = View.reportStack;
 		Writer.write(pStack);
@@ -312,22 +337,32 @@ public class View extends JFrame implements ActionListener {
 		System.exit(0);
 
 	}
-
+	/**
+	 * Decrements questionCounter
+	 * Indexer is opposite to traverse Stack backwards
+	 * 	
+	 */
 	private void decrementCounter() {
 		if (questionCounter == 1) {
 			// do nothing
 		} else {
 			questionCounter--;
+			indexer++;
 
 		}
 
 	}
-
+	/**
+	 * 
+	 * Increments counter and decrements index.
+	 * Indexer is opposite to traverse Stack backwards
+	 */
 	private void incrementCounter() {
 		if (questionCounter == totalQ) {
 			// do nothing
 		} else {
 			questionCounter++;
+			indexer--;
 
 		}
 
